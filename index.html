@@ -6,19 +6,53 @@
 	<style>
 	canvas {
 	   	border: 1px solid black;
+        border-radius: 5px;
+    }
+    body {
+        display: table-cell;
+        vertical-align: middle;
+    }
+    html {
+        top: 0; 
+        left 0;
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        vertical-align:center;
+        display: table;
+        position: absolute;
 	} 
 	</style>
     </head> 
-    <body> 
+    <body id="content"> 
         <canvas id="c"></canvas> 
         <script> 
         var canvas = document.getElementById('c');
+        var body = document.getElementById('content');
         var ctx = canvas.getContext("2d");
+        var tapped = false;
+        var height = canvas.height = body.clientHeight - 40;
+        var width = canvas.width = body.clientWidth - 40;
+
+        var loop_intervalms = 50;
         
-        ctx.save();
-        ctx.fillStyle = 'rgb(0,0,0)';
-        ctx.fillRect(0,0,50,50);
-        ctx.restore();
+        function loop() {
+            ctx.clearRect(0,0,width,height);
+            if (tapped) {
+                ctx.save();
+                ctx.fillStyle = 'rgb(0,0,0)';
+                ctx.fillRect(0,0,50,50);
+                ctx.restore();  
+            } 
+
+            tapped = false;
+            setTimeout(loop, loop_intervalms);
+        }
+        setTimeout(loop, loop_intervalms);
+
+        onkeydown = onmousedown = function tap(e) {
+            tapped=true;
+        }
         </script>
 	</body>
 </html>
