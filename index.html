@@ -1,0 +1,24 @@
+<!doctype html> 
+<html> 
+    <head> 
+        <title>Flappy Thirds</title> 
+        <meta charset="utf-8" /> 
+	<style>
+	canvas {
+	   	border: 1px solid black;
+	} 
+	</style>
+    </head> 
+    <body> 
+        <canvas id="c"></canvas> 
+        <script> 
+        var canvas = document.getElementById('c');
+        var ctx = canvas.getContext("2d");
+        
+        ctx.save();
+        ctx.fillStyle = 'rgb(0,0,0)';
+        ctx.fillRect(0,0,50,50);
+        ctx.restore();
+        </script>
+	</body>
+</html>
