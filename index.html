@@ -1,58 +1,148 @@
 <!doctype html> 
 <html> 
-    <head> 
-        <title>Flappy Thirds</title> 
-        <meta charset="utf-8" /> 
-	<style>
-	canvas {
-	   	border: 1px solid black;
-        border-radius: 5px;
-    }
-    body {
-        display: table-cell;
-        vertical-align: middle;
-    }
-    html {
-        top: 0; 
-        left 0;
-        width: 100%;
-        height: 100%;
-        text-align: center;
-        vertical-align:center;
-        display: table;
-        position: absolute;
-	} 
-	</style>
-    </head> 
-    <body id="content"> 
-        <canvas id="c"></canvas> 
-        <script> 
-        var canvas = document.getElementById('c');
-        var body = document.getElementById('content');
+<head> 
+    <title>Flappy Thirds</title> 
+    <meta charset="utf-8" /> 
+<style>
+canvas {
+    border: 1px solid black;
+    border-radius: 5px;
+}
+body {
+    display: table-cell;
+    vertical-align: middle;
+}
+html {
+    top: 0; 
+    left 0;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    vertical-align:center;
+    display: table;
+    position: absolute;
+} 
+</style>
+</head> 
+<body id="content"> 
+<canvas id="c"></canvas> 
+<script> 
+    (function (body, canvas) {
+        var width, height
+        var score, player;
+
+        var started = false;
+
         var ctx = canvas.getContext("2d");
-        var tapped = false;
-        var height = canvas.height = body.clientHeight - 40;
-        var width = canvas.width = body.clientWidth - 40;
-
         var loop_intervalms = 50;
-        
-        function loop() {
-            ctx.clearRect(0,0,width,height);
-            if (tapped) {
-                ctx.save();
+        var gravity = 1.2, punt = -20;
+        var tile_w = 30, tile_h = 40;
+
+        function Tile(x, y) {
+            this.x = x;
+            this.y = y;
+
+            this.draw = function draw(ctx) {
                 ctx.fillStyle = 'rgb(0,0,0)';
-                ctx.fillRect(0,0,50,50);
-                ctx.restore();  
-            } 
-
-            tapped = false;
-            setTimeout(loop, loop_intervalms);
+                ctx.fillRect(this.x,this.y,tile_w,tile_h);
+            }
         }
-        setTimeout(loop, loop_intervalms);
 
-        onkeydown = onmousedown = function tap(e) {
-            tapped=true;
+        function Player(x, y) {
+            Tile.call(this, x,y);
+            this.velocity = 0;
+                
+            this.punt = function (scale) {
+                   this.velocity = scale ? (scale*punt) : (punt)
+            }
+
+            this.update = function update() {
+                this.velocity = this.velocity + gravity;
+                this.y = this.y + this.velocity;
+            }
+
+            this.alive = function alive() {
+                return this.y > 0 && this.y+tile_h < height;
+            }
         }
-        </script>
-	</body>
+            
+        // Set up canvas, global state. Called at beginning & before new game.
+
+        function reset() {
+            height = canvas.height = 400; // body.clientHeight - 40;
+            width = canvas.width = body.clientWidth - 40;
+            score = 0;
+            player = new Player(60, height/2- tile_h/2);
+        }
+
+        // State of Game.
+
+        function start_screen() {
+
+            ctx.clearRect(0, 0, width, height);
+            player.draw(ctx);
+
+            window.onkeydown = window.onmousedown = function tap(e) {
+                started = true;
+            }
+            start_loop();
+        }
+
+        function death_screen() {
+
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillText('Scored: '+score, 30, height/2);
+            player.draw(ctx);
+
+            started = false;
+
+            window.onkeydown = window.onmousedown = function tap(e) {
+                reset();
+                start_screen();
+            }
+        }
+
+        function play_screen() {
+            window.onkeydown = window.onmousedown = function tap(e) {
+                player.punt();
+            }
+            play_loop()
+        }
+
+        function start_loop() {
+            ctx.clearRect(0,0,width,height);
+            ctx.fillText('Click or tap to start', 30, height/2);
+            player.update();
+
+            if (player.y > 0.6*height) {
+                player.punt(0.5);
+            }
+            player.draw(ctx);
+        
+            if (started) {
+                play_screen();
+            } else {
+                setTimeout(start_loop, loop_intervalms);
+            }
+        }
+
+        function play_loop() {
+            ctx.clearRect(0,0,width,height);
+            player.update();
+
+            player.draw(ctx);
+        
+            if (player.alive()) {
+                setTimeout(play_loop, loop_intervalms);
+            } else {
+                death_screen()
+            }
+        }
+        reset();
+        start_screen();
+
+        })(document.getElementById('content'),document.getElementById('c'));
+
+</script>
+</body>
 </html>
