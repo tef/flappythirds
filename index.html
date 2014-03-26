@@ -73,10 +73,10 @@ html {
             ctx.stroke();
             ctx.fill();
         }
-        function draw_text(text) {
+        function draw_text(text, baseline) {
 
             ctx.font = "40px sans-serif";
-            ctx.textBaseline = 'middle'
+            ctx.textBaseline = baseline || 'middle';
             var w = ctx.measureText(text).width;
 
             ctx.fillStyle = ctx.strokeStyle = 'rgba(255,255,255,0.1)';
@@ -230,7 +230,8 @@ html {
 
         function start_loop() {
             ctx.clearRect(0,0,width,height);
-            draw_text('Click or tap to start');
+            draw_text('Flappy Thirds', 'bottom')
+            draw_text('Click or tap to start', 'top');
             player.update();
 
             if (player.y > 0.6*height) {
