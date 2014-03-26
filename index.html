@@ -50,7 +50,7 @@ html {
                 ctx.font = size+"px sans-serif";
                 w = ctx.measureText(text).width;
                 if (w > tile_w-6) {
-                    size = parseInt(size*(tile_w/w))
+                    size = parseInt(size*(tile_w/w*0.9))
                 }
                 font = size+"px sans-serif";
                 fontcache[text] = font;
@@ -235,10 +235,15 @@ html {
 
             if (player.y > 0.6*height) {
                 player.punt(0.5);
+				player.value=player.value*2
+				if (player.value > 65536) {
+					player.value =1;
+				}
             }
             player.draw(ctx);
         
             if (started) {
+				player.value = 1;
                 play_screen();
             } else {
                 setTimeout(start_loop, loop_intervalms);
