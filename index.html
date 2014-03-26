@@ -39,24 +39,78 @@ html {
         var gravity = 1.7, punt = -16;
         var tile_h = parseInt(height*0.11), tile_w = parseInt(tile_h/1.618);
         var start_value = 1;
-        var fontcache = {}
+        var sizecache = {}
+        var size_si_cache = {}
         var pipes = []
         var tile_speed = 7;
+        var font_style ="px sans-serif";
 
-        function get_font(text) {
-            if (fontcache[text]) {
-                return fontcache[text];
-            } else {
-                var size = parseInt(tile_h*0.4)
-                ctx.font = size+"px sans-serif";
-                w = ctx.measureText(text).width;
-                if (w > tile_w-6) {
-                    size = parseInt(size*(tile_w/w*0.9))
+        function draw_number(num, x ,y) {
+            if (num <=8192) {
+                if (sizecache[num]) {
+                    size = sizecache[num];
+                } else {
+                        var size = parseInt(tile_h*0.4)
+                        ctx.font = size+font_style;
+                        w = ctx.measureText(num).width;
+                        if (w > tile_w-6) {
+                            size = parseInt(size*(tile_w/w*0.9))
+                        }
+                        sizecache[num] = size;
                 }
-                font = size+"px sans-serif";
-                fontcache[text] = font;
-                return font;
+                ctx.font = size+font_style;
+                ctx.textBaseline = 'bottom'
+                w = ctx.measureText(num).width;
+                ctx.fillText(num, x+(tile_w-w)/2, y-1, tile_w);
+                ctx.textBaseline = 'top'
+                w = ctx.measureText("3").width;
+                ctx.fillText("3", x+(tile_w-w)/2, y, tile_w);
+            } else {
+                num = parseInt(Math.log(num) / Math.LN2);
+                var mantissa, exponent;
+                if (size_si_cache[num]) {
+                    mantissa = size_si_cache[num][0];
+                    exponent = size_si_cache[num][1];
+                } else {
+                    mantissa = parseInt(tile_h*0.35)
+                    ctx.font = mantissa+"px sans-serif";
+                    w = ctx.measureText("2").width;
+                    if (w > tile_w-6) {
+                        mantissa = parseInt(mantissa*(tile_w/w*0.9))
+                    }
+
+                    exponent = parseInt(tile_h*0.25)
+                    ctx.font = exponent+font_style;
+                    w = ctx.measureText(num).width;
+                    if (w > tile_w-6-mantissa) {
+                        exponent = parseInt(exponent*(tile_w/(w+mantissa)*0.9))
+                    }
+
+                    size_si_cache[num] = [mantissa, exponent];
+                }
+                ctx.font = mantissa+font_style;
+                w_man = ctx.measureText("2").width;
+
+                ctx.font = exponent+font_style;
+                w_exp = ctx.measureText(num).width;
+
+                w=w_man+w_exp;
+
+                ctx.textBaseline = 'bottom'
+                ctx.font = mantissa+font_style;
+                ctx.fillText("2", x+(tile_w-w)/2, y-1, tile_w);
+
+                ctx.textBaseline = 'bottom'
+                ctx.font = exponent+font_style;
+                ctx.fillText(num, x+w_exp-2+(tile_w-w)/2, y-exponent-(mantissa/5), tile_w);
+
+                ctx.textBaseline = 'top'
+                ctx.font = mantissa+font_style;
+                w = ctx.measureText("3").width;
+                ctx.fillText("3", x+(tile_w-w)/2, y, tile_w);
+
             }
+            ctx.fillRect(x+3, y-2, tile_w-6, 1);
         }
         function drawRoundRect(x,y,w,h) {
             var radius = 5
@@ -115,15 +169,8 @@ html {
                 drawRoundRect(this.x, this.y, tile_w, tile_h);
 
                 ctx.fillStyle = 'black';
-                ctx.font = get_font(this.value);
-                ctx.textBaseline = 'bottom'
-                y = this.y + tile_h/2;
-                w = ctx.measureText(this.value).width;
-                ctx.fillText(this.value, this.x+(tile_w-w)/2, y-1, tile_w);
-                ctx.textBaseline = 'top'
-                w = ctx.measureText("3").width;
-                ctx.fillText("3", this.x+(tile_w-w)/2, y, tile_w);
-                ctx.fillRect(this.x+3, y-2, tile_w-6, 1);
+				y = this.y + tile_h/2;
+                draw_number(this.value, this.x, y);
                 ctx.restore();
             }
 
@@ -237,10 +284,10 @@ html {
 
             if (player.y > 0.6*height) {
                 player.punt(0.5);
-				player.value=player.value*2
-				if (player.value > 65536) {
-					player.value =1;
-				}
+		player.value=player.value*2
+		if (player.value > 262144) {
+			player.value =1;
+		}
             }
             player.draw(ctx);
         
