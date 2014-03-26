@@ -239,8 +239,12 @@ html {
             ctx.clearRect(0, 0, width, height);
             player.draw(ctx);
 
-            window.ontouchstart = window.onkeydown = window.onmousedown = function tap(e) {
+            window.ontouchstart = window.onmousedown = function tap(e) {
                 started = true;
+            }
+            window.onkeydown = function tap(e) {
+                k = window.event ? e.keyCode : e.which;
+                if (k == 32) { started = true };
             }
             start_loop();
         }
@@ -263,23 +267,36 @@ html {
             ctx.save();
 
 
-            window.ontouchstart = window.onkeydown = window.onmousedown = function tap(e) {
+            window.ontouchstart = window.onmousedown = function tap(e) {
                 reset();
                 start_screen();
+            }
+            window.onkeydown = function tap(e) {
+                k = window.event ? e.keyCode : e.which;
+                if (k == 32) {
+                    reset();
+                    start_screen();
+                }
             }
         }
 
         function play_screen() {
-            window.ontouchstart = window.onkeydown = window.onmousedown = function tap(e) {
+            window.ontouchstart = window.onmousedown = function tap(e) {
                 player.punt();
             }
-            play_loop()
+            window.onkeydown = function tap(e) {
+                k = window.event ? e.keyCode : e.which;
+                if (k == 32) {
+                    player.punt();
+                }
+            }
+            play_loop();
         }
 
         function start_loop() {
             ctx.clearRect(0,0,width,height);
             draw_text('Flappy Thirds', 'bottom')
-            draw_text('Click or tap to start', 'top');
+            draw_text('Click/space to start', 'top');
             player.update();
 
             if (player.y > 0.6*height) {
