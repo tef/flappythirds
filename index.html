@@ -35,12 +35,12 @@ html {
 
         var ctx = canvas.getContext("2d");
         var loop_intervalms = 50;
-        var gravity = 1.5, punt = -17;
-        var tile_h = parseInt(height/6), tile_w = parseInt(tile_h/1.618);
+        var gravity = 1.7, punt = -17;
+        var tile_h = parseInt(height*0.12), tile_w = parseInt(tile_h/1.618);
         var start_value = 1;
         var fontcache = {}
         var pipes = []
-        var tile_speed = 5;
+        var tile_speed = 7;
 
         function get_font(text) {
             if (fontcache[text]) {
@@ -177,7 +177,7 @@ html {
                 for (var i=0; i<4; i++) {
                     var m = arr[i];
                     if (m) {
-                        var y = height/5*(i+1)-tile_h/2;
+                        var y = -20+height/4.5*(i+1)-tile_h/2 ;
                         pipes.push(new Tile(width-tile_w, y, player.value*m))
                     }
                 }
