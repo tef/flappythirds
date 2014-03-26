@@ -28,28 +28,119 @@ html {
 <canvas id="c"></canvas> 
 <script> 
     (function (body, canvas) {
-        var width, height
         var score, player;
 
         var started = false;
+        var width=350, height=400
 
         var ctx = canvas.getContext("2d");
         var loop_intervalms = 50;
-        var gravity = 1.2, punt = -20;
-        var tile_w = 30, tile_h = 40;
+        var gravity = 1.5, punt = -17;
+        var tile_h = parseInt(height/6), tile_w = parseInt(tile_h/1.618);
+        var start_value = 1;
+        var fontcache = {}
+        var pipes = []
+        var tile_speed = 5;
 
-        function Tile(x, y) {
+        function get_font(text) {
+            if (fontcache[text]) {
+                return fontcache[text];
+            } else {
+                var size = parseInt(tile_h*0.4)
+                ctx.font = size+"px sans-serif";
+                w = ctx.measureText(text).width;
+                if (w > tile_w-6) {
+                    size = parseInt(size*(tile_w/w))
+                }
+                font = size+"px sans-serif";
+                fontcache[text] = font;
+                return font;
+            }
+        }
+        function drawRoundRect(x,y,w,h) {
+            var radius = 5
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + w - radius, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+            ctx.lineTo(x + w, y + h - radius);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+            ctx.lineTo(x + radius, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.fill();
+        }
+        function draw_text(text) {
+
+            ctx.font = "40px sans-serif";
+            ctx.textBaseline = 'middle'
+            var w = ctx.measureText(text).width;
+
+            ctx.fillStyle = ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineJoin = 'round';
+            ctx.lineWidth=5;
+            ctx.fillRect((width-w)/2, height/2-20, w, 40);
+
+            ctx.fillStyle='black';
+            ctx.fillText(text, (width-w)/2, height/2);
+
+            ctx.restore();
+       }
+
+        function shuffleArray(array) {
+            for (var i = array.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = array[i];
+                array[i] = array[j];
+                array[j] = temp;
+            }
+            return array;
+        }
+
+
+        function Tile(x, y, n) {
             this.x = x;
             this.y = y;
+            this.value = n
 
             this.draw = function draw(ctx) {
-                ctx.fillStyle = 'rgb(0,0,0)';
-                ctx.fillRect(this.x,this.y,tile_w,tile_h);
+                ctx.save();
+                ctx.strokeStyle = 'black';
+                ctx.fillStyle = 'white';
+                ctx.lineWidth = 3;
+                drawRoundRect(this.x, this.y, tile_w, tile_h);
+
+                ctx.fillStyle = 'black';
+                ctx.font = get_font(this.value);
+                ctx.textBaseline = 'bottom'
+                y = this.y + tile_h/2;
+                w = ctx.measureText(this.value).width;
+                ctx.fillText(this.value, this.x+(tile_w-w)/2, y-1, tile_w);
+                ctx.textBaseline = 'top'
+                w = ctx.measureText("3").width;
+                ctx.fillText("3", this.x+(tile_w-w)/2, y, tile_w);
+                ctx.fillRect(this.x+3, y-2, tile_w-6, 1);
+                ctx.restore();
+            }
+
+            this.collide = function collide(other) {
+                return (this.x < other.x+tile_w &&
+                        this.x+tile_w > other.x && 
+                        this.y < other.y+tile_h &&
+                        this.y+tile_h > other.y);
+            }
+
+            this.move = function move() {
+                this.x -= tile_speed;
+                return this.x + tile_w > 0;
             }
         }
 
         function Player(x, y) {
-            Tile.call(this, x,y);
+            Tile.call(this, x, y, start_value);
             this.velocity = 0;
                 
             this.punt = function (scale) {
@@ -59,6 +150,8 @@ html {
             this.update = function update() {
                 this.velocity = this.velocity + gravity;
                 this.y = this.y + this.velocity;
+                if (this.y < 0) {this.y =0}
+                if (this.y+tile_h > height) {this.y = height-tile_h}
             }
 
             this.alive = function alive() {
@@ -69,10 +162,26 @@ html {
         // Set up canvas, global state. Called at beginning & before new game.
 
         function reset() {
-            height = canvas.height = 400; // body.clientHeight - 40;
-            width = canvas.width = body.clientWidth - 40;
+            canvas.height = height; 
+            canvas.width = width;
             score = 0;
-            player = new Player(60, height/2- tile_h/2);
+            player = new Player(width/4-tile_w/2, height/2- tile_h/2);
+            pipes = []
+            new_pipe()
+        }
+
+        function new_pipe() {
+            if (pipes.length == 0) { 
+                score++;
+                var arr = shuffleArray([0,1,2,4]);
+                for (var i=0; i<4; i++) {
+                    var m = arr[i];
+                    if (m) {
+                        var y = height/5*(i+1)-tile_h/2;
+                        pipes.push(new Tile(width-tile_w, y, player.value*m))
+                    }
+                }
+            }
         }
 
         // State of Game.
@@ -91,10 +200,20 @@ html {
         function death_screen() {
 
             ctx.clearRect(0, 0, width, height);
-            ctx.fillText('Scored: '+score, 30, height/2);
+
+            for (var i=0; i<pipes.length; i++){
+                pipes[i].draw(ctx);
+            }
+
             player.draw(ctx);
 
             started = false;
+
+            var score_text = "Score: "+player.value*score;
+            draw_text(score_text);
+
+            ctx.save();
+
 
             window.onkeydown = window.onmousedown = function tap(e) {
                 reset();
@@ -111,7 +230,7 @@ html {
 
         function start_loop() {
             ctx.clearRect(0,0,width,height);
-            ctx.fillText('Click or tap to start', 30, height/2);
+            draw_text('Click or tap to start');
             player.update();
 
             if (player.y > 0.6*height) {
@@ -130,9 +249,31 @@ html {
             ctx.clearRect(0,0,width,height);
             player.update();
 
+            var alive = player.alive();
+            var new_pipes = []
+            for (var i=0; i<pipes.length; i++){
+                var p = pipes[i]
+                if (p.move()) {
+                    if (player.collide(p)) {
+                        if (alive && player.value == p.value) {
+                            player.value*=2;
+                        } else {
+							new_pipes.push(p);
+                            alive = false;
+                        }
+                    } else {
+                        new_pipes.push(p);
+                    }
+                }
+                p.draw(ctx)
+            }
+            pipes = new_pipes
+            new_pipe()
+
+
             player.draw(ctx);
         
-            if (player.alive()) {
+            if (alive) {
                 setTimeout(play_loop, loop_intervalms);
             } else {
                 death_screen()
