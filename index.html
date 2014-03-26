@@ -3,6 +3,7 @@
 <head> 
     <title>Flappy Thirds</title> 
     <meta charset="utf-8" /> 
+	<meta name="viewport" content="width=device-width, user-scalable=no">
 <style>
 canvas {
     border: 1px solid black;
@@ -35,7 +36,7 @@ html {
 
         var ctx = canvas.getContext("2d");
         var loop_intervalms = 50;
-        var gravity = 1.7, punt = -17;
+        var gravity = 1.7, punt = -16;
         var tile_h = parseInt(height*0.11), tile_w = parseInt(tile_h/1.618);
         var start_value = 1;
         var fontcache = {}
@@ -191,7 +192,7 @@ html {
             ctx.clearRect(0, 0, width, height);
             player.draw(ctx);
 
-            window.onkeydown = window.onmousedown = function tap(e) {
+            window.ontouchstart = window.onkeydown = window.onmousedown = function tap(e) {
                 started = true;
             }
             start_loop();
@@ -215,14 +216,14 @@ html {
             ctx.save();
 
 
-            window.onkeydown = window.onmousedown = function tap(e) {
+            window.ontouchstart = window.onkeydown = window.onmousedown = function tap(e) {
                 reset();
                 start_screen();
             }
         }
 
         function play_screen() {
-            window.onkeydown = window.onmousedown = function tap(e) {
+            window.ontouchstart = window.onkeydown = window.onmousedown = function tap(e) {
                 player.punt();
             }
             play_loop()
